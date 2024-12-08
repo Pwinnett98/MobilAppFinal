@@ -238,7 +238,6 @@ private val highContrastDarkColorScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
 )
 
-)
 
 @Composable
 fun MovieBuffsTheme(

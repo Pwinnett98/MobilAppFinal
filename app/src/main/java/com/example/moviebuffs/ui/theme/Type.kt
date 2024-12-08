@@ -9,8 +9,8 @@ import androidx.compose.ui.unit.sp
 import com.example.moviebuffs.R
 
 val Cabin = FontFamily(
-    Font(R.font.Cabin_Regular),
-    Font(R.font.Cabin_Bold, FontWeight.Bold)
+    Font(R.font.cabin_regular),
+    Font(R.font.cabin_bold, FontWeight.Bold)
 )
 
 val Typography = Typography(
