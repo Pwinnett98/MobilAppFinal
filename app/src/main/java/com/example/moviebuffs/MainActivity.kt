@@ -12,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,15 +28,51 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MovieBuffsTheme {
-              Surface(
+                Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                  val windowSize = calculateWindowSizeClass(this)
+                    val windowSize = calculateWindowSizeClass(this)
                     MovieApp(
                         windowSize = windowSize.widthSizeClass
                     )
                 }
+            }
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun MovieBuffsAppCompactPreview() {
+        MovieBuffsTheme {
+            Surface {
+                MovieApp(
+                    windowSize = WindowWidthSizeClass.Compact
+                )
+            }
+        }
+    }
+
+    @Preview(showBackground = true, widthDp = 700)
+    @Composable
+    fun MovieBuffsAppMediumPreview() {
+        MovieBuffsTheme {
+            Surface {
+                MovieApp(
+                    windowSize = WindowWidthSizeClass.Medium
+                )
+            }
+        }
+    }
+
+    @Preview(showBackground = true, widthDp = 1000)
+    @Composable
+    fun MovieBuffsAppExpandedPreview() {
+        MovieBuffsTheme {
+            Surface {
+                MovieApp(
+                    windowSize = WindowWidthSizeClass.Expanded
+                )
             }
         }
     }

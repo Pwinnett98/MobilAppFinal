@@ -1,18 +1,21 @@
 package com.example.moviebuffs.network
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class Movies(
     val title: String,
+    @SerialName("poster")
     val poster: String,
-    @StringRes val titleResourceId: Int,
-    @StringRes val subtitleResourceId: Int,
     val description: String,
-    @DrawableRes val imageResourceId: Int,
-    @DrawableRes val movieImageBanner: Int,
-    @StringRes val movieDetails: Int
+    @SerialName("release_Date")
+    val releaseDate: String,
+    @SerialName("content_rating")
+    val contentRating: String,
+    @SerialName("review_score")
+    val reviewScore: String,
+    @SerialName("big_image")
+    val bigImage: Int,
+    val length: String,
 )
