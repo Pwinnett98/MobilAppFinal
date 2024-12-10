@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.moviebuffs.R
-import com.example.moviebuffs.network.MovieApiService
 import com.example.moviebuffs.network.Movies
 import com.example.moviebuffs.ui.theme.MovieBuffsTheme
 import com.example.moviebuffs.ui.utils.MovieContentType
@@ -48,17 +46,23 @@ import com.example.moviebuffs.ui.utils.MovieContentType
 @Composable
 fun HomeScreen(
     movieUiState: MovieUiState,
+    contentType: MovieContentType,
     retryAction: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues
 ) {
+    val movieUiState = MovieViewModel.MovieUiState
+
     when (movieUiState) {
         is MovieUiState.Loading -> LoadingScreen(modifier = modifier)
         is MovieUiState.Success -> {
             MovieNav(
-                viewModel = MovieViewModel(),
-                movies = movieUiState.movies
-            )}
-        is MovieUiState.Error -> ErrorScreen(retryAction, modifier = modifier)
+                viewModel = movieUiState,
+                movies = (movieUiState as MovieUiState.Success).movies,
+                contentType = contentType,
+                contentPadding = contentPadding,
+            ) }
+        is MovieUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
     }
 }
 
@@ -81,7 +85,10 @@ fun ErrorScreen(retryAction: () -> Unit, modifier: Modifier = Modifier) {
         Image(
             painter = painterResource(id = R.drawable.ic_connection_error), contentDescription = ""
         )
-        Text(text = stringResource(R.string.loading_failed), modifier = Modifier.padding(16.dp))
+        Text(
+            text = stringResource(R.string.loading_failed),
+            modifier = Modifier.padding(16.dp)
+        )
         Button(onClick = retryAction) {
             Text(stringResource(R.string.retry))
         }
@@ -93,16 +100,19 @@ fun ErrorScreen(retryAction: () -> Unit, modifier: Modifier = Modifier) {
 fun MovieNav(
     viewModel : MovieViewModel,
     movies: List<Movies>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentType: MovieContentType,
+    contentPadding: PaddingValues
 ) {
     val uiState by viewModel.navigationState.collectAsState()
-    val selectedMovie = uiState.currentMovie ?: movies.firstOrNull()
-
-    movieLazyScreen (
+    val currentMovie = uiState.currentMovie ?: movies.firstOrNull()
+    MovieLazyScreen (
         movies = movies,
-        modifier = Modifier)
+        modifier = Modifier,
+        contentPadding = contentPadding
+    )
 
-    LaunchedEffects(Unit){
+    LauchedEffects(Unit){
         viewModel.getMovies()
     }
     if (contentType == MovieContentType.LIST_AND_DETAIL){
@@ -114,7 +124,8 @@ fun MovieNav(
                     viewModel.navigateToDetailPage()
                 },
                 currentMovie = movie,
-                modifier = modifier.fillMaxSize()
+                contentPadding = contentPadding,
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
@@ -130,8 +141,7 @@ fun MovieCard(
         modifier = modifier
             .height(180.dp)
             .fillMaxWidth()
-            .padding(top = 8.dp)
-
+            .padding(top = 8.dp),
         onClick = onClick
     ) {
         Row(
@@ -171,7 +181,7 @@ fun MovieCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
-                    VerticalAllignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.star),
@@ -191,44 +201,23 @@ fun MovieCard(
         }
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MovieListItem(
-    movies: List<Movies>,
-    onItemClick: (Movies) -> Unit,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues? = null
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = contentPadding ?: PaddingValues(0.dp)
-    ) {
-        items(items = movies) { movie ->
-            MovieCard(
-                movies = movie,
-                onClick = { onItemClick(movie) },
-                modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-        }
-    }
 
     @Composable
     fun MovieList(
         movies: List<Movies>,
-        onClick: (Movies) -> Unit,
+        onMovieClick: (Movies) -> Unit,
         modifier: Modifier = Modifier,
         contentPadding: PaddingValues = PaddingValues(0.dp),
     ) {
         LazyColumn(
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
-            modifier = modifier,
+            modifier = modifier.fillMaxWidth(),
         ) {
             items(movies, key = { movies -> movies.title }) { movies ->
-                MovieListItem(
+                MovieCard(
                     movies = movies,
-                    onItemClick = onClick,
+                    onClick = { onMovieClick(movies)},
                     modifier = modifier
                         .padding(4.dp)
                         .fillMaxWidth()
@@ -241,7 +230,6 @@ fun MovieListItem(
     fun MovieDetail(
         movie: Movies,
         onBackPressed: () -> Unit,
-        contentPadding: PaddingValues,
         modifier: Modifier = Modifier
     ) {
         BackHandler {
@@ -249,7 +237,7 @@ fun MovieListItem(
         }
         AsyncImage(
             model = ImageRequest.Builder(context = LocalContext.current)
-                .data(movies.bigImage)
+                .data(movie.bigImage)
                 .crossfade(true)
                 .build(),
             contentDescription = null,
@@ -262,7 +250,7 @@ fun MovieListItem(
             modifier = modifier.fillMaxSize()
         ) {
             Text(
-                text = movies.title,
+                text = movie.title,
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -280,7 +268,7 @@ fun MovieListItem(
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = Movies.contentRating,
+                    text = movie.contentRating,
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -291,7 +279,7 @@ fun MovieListItem(
                 )
 
                 Text(
-                    text = Movies.length,
+                    text = movie.length,
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -304,7 +292,7 @@ fun MovieListItem(
                 )
 
                 Text(
-                    text = Movies.releaseDate,
+                    text = movie.releaseDate,
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -317,14 +305,14 @@ fun MovieListItem(
                 )
 
                 Text(
-                    text = movies.reviewScore,
+                    text = movie.reviewScore,
                     style = MaterialTheme.typography.titleMedium
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Text(
-                    text = movies.description,
+                    text = movie.description,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -335,7 +323,7 @@ fun MovieListItem(
     }
 
     @Composable
-    fun MoviesListAndDetails(
+    fun MovieListAndDetails(
         movies: List<Movies>,
         onClick: (Movies) -> Unit,
         currentMovie: Movies?,
@@ -357,60 +345,86 @@ fun MovieListItem(
             }
         }
     }
+
+@Composable
+fun MovieLazyScreen(
+    movies: List<Movies>,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues
+){
+    MovieList(
+        movies = movies,
+        onMovieClick = { },
+        modifier = modifier,
+        contentPadding = contentPadding
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MovieCardPreview() {
+    MovieBuffsTheme {
+        Surface {
+            val mockMovie = Movies(
+                title = "Mock Movie",
+                poster = "mock_poster_url",
+                description = "Mock description",
+                reviewScore = "4.5",
+                bigImage = "",
+                contentRating = "R",
+                releaseDate = "July 21, 2023",
+                length = "2h 00m"
+            )
+            MovieCard(
+                movies = mockMovie,
+                onClick = {},
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MoviesListPreview() {
+    MovieBuffsTheme {
+        Surface {
+            val mockData = List(18) { Movies("", "", "", "", "", " ", "", "") }
+            MovieList(
+                movies = mockData,
+                onMovieClick = {},
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
 }
 
 
 @Preview(showBackground = true)
 @Composable
-fun PhotosGridScreenPreview() {
+fun MoviesDetailPreview() {
     MovieBuffsTheme {
-        val mockData = List(10) { Movies("$it", "") }
-        MovieNav(mockData)
+        Surface {
+            val mockMovie = Movies("", "", "", "", "", "", "", "")
+            MovieDetail(
+                movie = mockMovie,
+                onBackPressed = {},
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
-
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun MovieListItemPreview() {
+fun MovieLazyScreenPreview() {
     MovieBuffsTheme {
-        MovieListItem(
-            movies = MovieApiService.defaultMovie,
-            onItemClick = {}
+        val mockData = List(18) { Movies("", "", "", "", "", " ", "", "") }
+        val contentPadding = PaddingValues(0.dp)
+        MovieLazyScreen(
+            movies = mockData,
+            modifier = Modifier,
+            contentPadding = contentPadding
         )
-    }
-}
-
-@Preview
-@Composable
-fun MovieListPreview() {
-    MovieBuffsTheme {
-        Surface {
-            MovieList(
-                movies = MovieApiService.getMovies(),
-                onClick = {},
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun MovieListandDetailsPreview() {
-    MovieBuffsTheme {
-        Surface {
-            MovieList(
-                movies = MovieApiService.currentMovie(),
-                onClick = {},
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun MovieBuffsDarkThemePreview() {
-    MovieBuffsTheme(darkTheme = true) {
-        MovieApp()
     }
 }

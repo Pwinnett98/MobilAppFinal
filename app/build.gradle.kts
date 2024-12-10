@@ -67,6 +67,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.media3.transformer)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

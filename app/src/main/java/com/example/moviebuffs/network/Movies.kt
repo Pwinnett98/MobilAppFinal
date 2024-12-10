@@ -16,6 +16,6 @@ data class Movies(
     @SerialName("review_score")
     val reviewScore: String,
     @SerialName("big_image")
-    val bigImage: Int,
+    val bigImage: String,
     val length: String,
 )

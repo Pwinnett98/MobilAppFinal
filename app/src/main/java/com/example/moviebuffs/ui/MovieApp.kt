@@ -3,6 +3,8 @@
 package com.example.moviebuffs.ui
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +31,6 @@ import com.example.moviebuffs.ui.utils.MovieContentType
 @Composable
 fun MovieApp(
     windowSize: WindowWidthSizeClass,
-    modifier: Modifier = Modifier
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val viewModel: MovieViewModel = viewModel()
@@ -59,7 +60,7 @@ fun MovieApp(
         }
     ) {
             HomeScreen(
-                viewModel = MovieViewModel,
+                movieUiState = MovieViewModel,
                 contentType = contentType,
                 retryAction = MovieViewModel::getMovies,
                 contentPadding = it
@@ -67,6 +68,7 @@ fun MovieApp(
         }
     }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieTopAppBar(
     scrollBehavior: TopAppBarScrollBehavior,
